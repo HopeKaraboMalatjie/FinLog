@@ -5,7 +5,7 @@
 
 ## Demo Video + GitHub Link
 🎬 [Watch on YouTube](https://youtu.be/-xWWp-MzfEA?si=W8Tbet2LKo7MZ_t6)
-🎬  [GitHub Link](https://github.com/HopeKaraboMalatjie/FinLog)
+🎬 [GitHub Link](https://github.com/HopeKaraboMalatjie/FinLog)
 
 ## Team
 | Name | Student No. |
