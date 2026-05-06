@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@color/bg_primary" android:fillViewport="true">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="24dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="FinLog" android:textSize="28sp" android:textStyle="bold"
+            android:fontFamily="serif" android:textColor="@color/green_accent" android:layout_marginTop="40dp"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Welcome back" android:textSize="26sp" android:textStyle="bold"
+            android:textColor="@color/text_primary" android:layout_marginTop="16dp"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Sign in to your account" android:textSize="14sp"
+            android:textColor="@color/text_muted" android:layout_marginBottom="28dp"/>
+        <com.google.android.material.textfield.TextInputLayout android:id="@+id/tilEmail"
+            style="@style/FinLog.TextInput" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="Email address" android:layout_marginBottom="12dp">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etEmail"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="textEmailAddress" android:textColor="@color/text_primary"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout android:id="@+id/tilPassword"
+            style="@style/FinLog.TextInput" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="Password" app:passwordToggleEnabled="true" android:layout_marginBottom="20dp">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etPassword"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="textPassword" android:textColor="@color/text_primary"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnLogin"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Sign In" app:backgroundTint="@color/green_primary" app:cornerRadius="10dp"
+            android:paddingTop="14dp" android:paddingBottom="14dp"/>
+        <TextView android:id="@+id/tvRegister" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Don't have an account? Register" android:textColor="@color/green_accent"
+            android:textSize="14sp" android:padding="8dp" android:layout_gravity="center" android:layout_marginTop="12dp"/>
+        <ProgressBar android:id="@+id/progressBar" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:visibility="gone" android:layout_gravity="center" android:indeterminateTint="@color/green_accent"/>
+    </LinearLayout>
+</ScrollView>

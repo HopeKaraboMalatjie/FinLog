@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FinLog</string>
+    <string name="your_financial_log">YOUR FINANCIAL LOG</string>
+    <string name="no_transactions">No transactions yet. Tap + to add one.</string>
+    <string name="no_budgets">No budgets set. Tap + to create one.</string>
+    <string name="no_goals">No savings goals yet. Tap + to create one.</string>
+    <string name="no_wallets">No wallets yet. Tap + to add one.</string>
+    <string name="greeting_format">%1$s, %2$s 👋</string>
+    <string-array name="recurring_intervals">
+        <item>Daily</item><item>Weekly</item><item>Monthly</item><item>Annually</item>
+    </string-array>
+</resources>

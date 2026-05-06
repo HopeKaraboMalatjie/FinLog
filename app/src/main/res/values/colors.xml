@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="green_primary">#1A6B4A</color>
+    <color name="green_dark">#0D3D2B</color>
+    <color name="green_accent">#34D399</color>
+    <color name="bg_primary">#0F1117</color>
+    <color name="bg_secondary">#1C1F27</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#9CA3AF</color>
+    <color name="text_muted">#6B7280</color>
+    <color name="income_green">#22C55E</color>
+    <color name="expense_red">#EF4444</color>
+    <color name="warning_yellow">#F59E0B</color>
+    <color name="border">#374151</color>
+    <color name="colorPrimary">#1A6B4A</color>
+    <color name="colorPrimaryDark">#0D3D2B</color>
+    <color name="colorAccent">#34D399</color>
+</resources>

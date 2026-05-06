@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/dashboardFragment">
+
+    <fragment android:id="@+id/dashboardFragment" android:name="com.finlog.ui.dashboard.DashboardFragment" android:label="Home">
+        <action android:id="@+id/action_dashboard_to_addEdit" app:destination="@id/addEditTransactionFragment"/>
+        <action android:id="@+id/action_dashboard_to_detail"  app:destination="@id/transactionDetailFragment"/>
+    </fragment>
+
+    <fragment android:id="@+id/transactionsFragment" android:name="com.finlog.ui.transactions.TransactionsFragment" android:label="Transactions">
+        <action android:id="@+id/action_transactions_to_addEdit"  app:destination="@id/addEditTransactionFragment"/>
+        <action android:id="@+id/action_transactions_to_detail"   app:destination="@id/transactionDetailFragment"/>
+    </fragment>
+
+    <fragment android:id="@+id/addEditTransactionFragment" android:name="com.finlog.ui.transactions.AddEditTransactionFragment" android:label="Add Transaction"/>
+
+    <fragment android:id="@+id/transactionDetailFragment" android:name="com.finlog.ui.transactions.TransactionDetailFragment" android:label="Detail">
+        <argument android:name="transactionId" app:argType="string"/>
+    </fragment>
+
+    <fragment android:id="@+id/budgetFragment"  android:name="com.finlog.ui.budget.BudgetFragment"   android:label="Budget"/>
+    <fragment android:id="@+id/reportsFragment" android:name="com.finlog.ui.reports.ReportsFragment"  android:label="Reports"/>
+    <fragment android:id="@+id/goalsFragment"   android:name="com.finlog.ui.goals.GoalsFragment"      android:label="Goals"/>
+    <fragment android:id="@+id/walletsFragment" android:name="com.finlog.ui.wallets.WalletsFragment"  android:label="Wallets"/>
+    <fragment android:id="@+id/profileFragment" android:name="com.finlog.ui.settings.ProfileFragment" android:label="Profile"/>
+</navigation>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@color/bg_primary">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+        android:orientation="vertical" android:padding="16dp">
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Transactions" android:textSize="22sp" android:textStyle="bold"
+            android:textColor="@color/text_primary" android:layout_marginBottom="12dp"/>
+
+        <!-- Filter row -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:layout_marginBottom="8dp">
+            <com.google.android.material.chip.ChipGroup android:id="@+id/chipGroupType"
+                android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                app:singleSelection="true">
+                <com.google.android.material.chip.Chip android:id="@+id/chipIncome"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Income" style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:textColor="@color/text_secondary"/>
+                <com.google.android.material.chip.Chip android:id="@+id/chipExpense"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Expense" style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:textColor="@color/text_secondary"/>
+            </com.google.android.material.chip.ChipGroup>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnFilterDate"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content" android:layout_height="36dp"
+                android:text="Date" android:textSize="12sp" android:layout_marginStart="8dp"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnClearFilter"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content" android:layout_height="36dp"
+                android:text="Clear" android:textSize="12sp" android:layout_marginStart="4dp"/>
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvTransactions"
+            android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+
+        <TextView android:id="@+id/tvEmpty"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/no_transactions" android:textColor="@color/text_muted"
+            android:gravity="center" android:padding="32dp" android:visibility="gone"/>
+    </LinearLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/fabAdd"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end" android:layout_margin="16dp"
+        app:backgroundTint="@color/green_primary" app:srcCompat="@drawable/ic_add"
+        android:contentDescription="Add"/>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

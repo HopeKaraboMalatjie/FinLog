@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@color/bg_primary">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:padding="16dp" android:clipToPadding="false">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Month navigation -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="16dp">
+                <com.google.android.material.button.MaterialButton android:id="@+id/btnPrev"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="40dp" android:layout_height="40dp"
+                    android:text="&#x2039;" android:textSize="20sp" app:cornerRadius="20dp" android:padding="0dp"/>
+                <TextView android:id="@+id/tvMonth"
+                    android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:textSize="18sp" android:textStyle="bold" android:textColor="@color/text_primary"
+                    android:gravity="center"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/btnNext"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="40dp" android:layout_height="40dp"
+                    android:text="&#x203a;" android:textSize="20sp" app:cornerRadius="20dp" android:padding="0dp"/>
+            </LinearLayout>
+
+            <!-- Health Score card -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                app:cardBackgroundColor="@color/bg_secondary" app:cardCornerRadius="12dp"
+                app:cardElevation="0dp" android:layout_marginBottom="16dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical" android:padding="16dp">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                        android:text="Budget Health Score" android:textSize="14sp" android:textColor="@color/text_secondary"/>
+                    <ProgressBar android:id="@+id/progressScore"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="80dp" android:layout_height="8dp"
+                        android:max="100" android:layout_marginEnd="12dp"
+                        android:progressTint="@color/green_accent"/>
+                    <TextView android:id="@+id/tvScore"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:textSize="28sp" android:textStyle="bold" android:textColor="@color/green_accent"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvBudgets"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"/>
+
+            <TextView android:id="@+id/tvEmpty"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="@string/no_budgets" android:textColor="@color/text_muted"
+                android:gravity="center" android:padding="32dp" android:visibility="gone"/>
+
+            <View android:layout_width="match_parent" android:layout_height="80dp"/>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/fabAdd"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end" android:layout_margin="16dp"
+        app:backgroundTint="@color/green_primary" app:srcCompat="@drawable/ic_add"
+        android:contentDescription="Add budget"/>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
