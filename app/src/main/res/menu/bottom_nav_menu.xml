@@ -1,8 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/dashboardFragment"  android:icon="@drawable/ic_home"    android:title="Home"/>
-    <item android:id="@+id/budgetFragment"     android:icon="@drawable/ic_budget"  android:title="Budget"/>
-    <item android:id="@+id/reportsFragment"    android:icon="@drawable/ic_reports" android:title="Reports"/>
-    <item android:id="@+id/goalsFragment"      android:icon="@drawable/ic_goals"   android:title="Goals"/>
-    <item android:id="@+id/walletsFragment"    android:icon="@drawable/ic_wallet"  android:title="Wallets"/>
+    <item
+        android:id="@+id/dashboardFragment"
+        android:icon="@drawable/ic_home"
+        android:title="@string/nav_home" />
+    <item
+        android:id="@+id/transactionsFragment"
+        android:icon="@drawable/ic_wallet"
+        android:title="@string/nav_track" />
+    <item
+        android:id="@+id/budgetFragment"
+        android:icon="@drawable/ic_budget"
+        android:title="@string/nav_budget" />
+    <item
+        android:id="@+id/reportsFragment"
+        android:icon="@drawable/ic_reports"
+        android:title="@string/nav_reports" />
+    <item
+        android:id="@+id/gamificationFragment"
+        android:icon="@drawable/ic_trophy"
+        android:title="@string/nav_rewards" />
 </menu>

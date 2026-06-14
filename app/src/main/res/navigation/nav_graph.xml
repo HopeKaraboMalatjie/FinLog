@@ -7,6 +7,7 @@
     <fragment android:id="@+id/dashboardFragment" android:name="com.finlog.ui.dashboard.DashboardFragment" android:label="Home">
         <action android:id="@+id/action_dashboard_to_addEdit" app:destination="@id/addEditTransactionFragment"/>
         <action android:id="@+id/action_dashboard_to_detail"  app:destination="@id/transactionDetailFragment"/>
+        <action android:id="@+id/action_dashboard_to_insights" app:destination="@id/insightsFragment"/>
     </fragment>
 
     <fragment android:id="@+id/transactionsFragment" android:name="com.finlog.ui.transactions.TransactionsFragment" android:label="Transactions">
@@ -21,8 +22,13 @@
     </fragment>
 
     <fragment android:id="@+id/budgetFragment"  android:name="com.finlog.ui.budget.BudgetFragment"   android:label="Budget"/>
-    <fragment android:id="@+id/reportsFragment" android:name="com.finlog.ui.reports.ReportsFragment"  android:label="Reports"/>
+    <fragment android:id="@+id/reportsFragment" android:name="com.finlog.ui.reports.ReportsFragment"  android:label="Reports">
+        <action android:id="@+id/action_reports_to_calendar" app:destination="@id/calendarFragment"/>
+    </fragment>
     <fragment android:id="@+id/goalsFragment"   android:name="com.finlog.ui.goals.GoalsFragment"      android:label="Goals"/>
     <fragment android:id="@+id/walletsFragment" android:name="com.finlog.ui.wallets.WalletsFragment"  android:label="Wallets"/>
     <fragment android:id="@+id/profileFragment" android:name="com.finlog.ui.settings.ProfileFragment" android:label="Profile"/>
+    <fragment android:id="@+id/gamificationFragment" android:name="com.finlog.ui.gamification.GamificationFragment" android:label="Rewards"/>
+    <fragment android:id="@+id/insightsFragment" android:name="com.finlog.ui.reports.InsightsFragment" android:label="Insights"/>
+    <fragment android:id="@+id/calendarFragment" android:name="com.finlog.ui.reports.CalendarFragment" android:label="Calendar"/>
 </navigation>

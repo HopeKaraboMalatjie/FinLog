@@ -24,6 +24,8 @@ import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
+import com.finlog.ui.gamification.GamificationManager
+
 class GoalsViewModel(private val repo: Repository) : ViewModel() {
     val goals = repo.getGoals().asLiveData()
     fun save(g: Goal)   = viewModelScope.launch { repo.saveGoal(g) }
@@ -85,7 +87,13 @@ class GoalsFragment : Fragment() {
                     Toast.makeText(requireContext(), "Invalid amount", Toast.LENGTH_SHORT).show()
                     return@setPositiveButton
                 }
-                vm.contribute(goal.id, amt, goal.currentAmount, goal.targetAmount) { ms -> celebrate(goal.name, ms) }
+                vm.contribute(goal.id, amt, goal.currentAmount, goal.targetAmount) { ms ->
+                    celebrate(goal.name, ms)
+                    if (ms == 100) {
+                        GamificationManager.checkGoalCompleted(requireContext())
+                        GamificationManager.addPoints(requireContext(), 100)
+                    }
+                }
             }
             .setNegativeButton("Cancel", null)
             .show()

@@ -24,6 +24,8 @@ import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.util.*
 
+import com.finlog.ui.gamification.GamificationManager
+
 class BudgetViewModel(private val repo: Repository) : ViewModel() {
     private val _month = MutableLiveData(Calendar.getInstance().get(Calendar.MONTH) + 1)
     private val _year  = MutableLiveData(Calendar.getInstance().get(Calendar.YEAR))
@@ -68,6 +70,13 @@ class BudgetFragment : Fragment() {
         vm.budgets.observe(viewLifecycleOwner) { list ->
             adapter.submitList(list); b.tvEmpty.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
             vm.calcScore(list); list.filter { it.isNearLimit || it.isOverBudget }.forEach { sendAlert(it) }
+
+            // Gamification
+            val allGood = list.isNotEmpty() && list.all { !it.isOverBudget }
+            if (allGood) {
+                GamificationManager.checkBudgetMaster(requireContext(), true)
+                GamificationManager.addPoints(requireContext(), 50)
+            }
         }
         vm.healthScore.observe(viewLifecycleOwner) { score -> b.tvScore.text = score.toString(); b.progressScore.progress = score }
     }
@@ -84,16 +93,29 @@ class BudgetFragment : Fragment() {
     private fun showDialog(existing: Budget?) {
         val dv = layoutInflater.inflate(R.layout.dialog_budget, null)
         val etAmt = dv.findViewById<TextInputEditText>(R.id.etAmount)
+        val etMin = dv.findViewById<TextInputEditText>(R.id.etMinGoal)
         val spinner = dv.findViewById<android.widget.Spinner>(R.id.spinnerCategory)
         spinner.adapter = android.widget.ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, DEFAULT_CATEGORIES.map { "${it.emoji} ${it.name}" })
             .also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
-        existing?.let { etAmt.setText(it.limitAmount.toString()) }
+        existing?.let {
+            etAmt.setText(it.limitAmount.toString())
+            etMin.setText(it.minGoal.toString())
+        }
         MaterialAlertDialogBuilder(requireContext()).setTitle(if (existing == null) "Set Budget" else "Edit Budget").setView(dv)
             .setPositiveButton("Save") { _, _ ->
-                val amt = etAmt.text.toString().toDoubleOrNull()
-                if (amt == null || amt <= 0) { Toast.makeText(requireContext(), "Invalid amount", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
+                val amt = etAmt.text.toString().toDoubleOrNull() ?: 0.0
+                val min = etMin.text.toString().toDoubleOrNull() ?: 0.0
+                if (amt <= 0 && min <= 0) { Toast.makeText(requireContext(), "Enter at least one goal", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
                 val cat = DEFAULT_CATEGORIES[spinner.selectedItemPosition]
-                vm.save(existing?.copy(limitAmount = amt) ?: Budget(categoryId=cat.id, categoryName=cat.name, limitAmount=amt, month=vm.month.value ?: 1, year=vm.year.value ?: 2026))
+                vm.save(existing?.copy(limitAmount = amt, minGoal = min) ?: Budget(
+                    categoryId=cat.id,
+                    categoryName=cat.name,
+                    categoryEmoji=cat.emoji,
+                    limitAmount=amt,
+                    minGoal=min,
+                    month=vm.month.value ?: 1,
+                    year=vm.year.value ?: 2026
+                ))
             }.setNegativeButton("Cancel", null).show()
     }
 

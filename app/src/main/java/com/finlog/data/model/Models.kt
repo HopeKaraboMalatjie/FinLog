@@ -57,14 +57,24 @@ data class Budget(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val categoryId: String = "",
     val categoryName: String = "",
-    val limitAmount: Double = 0.0,
+    val categoryEmoji: String = "💰",
+    val minGoal: Double = 0.0,        // NEW: minimum monthly spending target
+    val limitAmount: Double = 0.0,    // maximum monthly spending limit
     val spentAmount: Double = 0.0,
     val month: Int = 0,
     val year: Int = 0
 ) {
-    val percentage: Double   get() = if (limitAmount > 0) (spentAmount / limitAmount) * 100.0 else 0.0
-    val isOverBudget: Boolean get() = spentAmount >= limitAmount
-    val isNearLimit: Boolean  get() = percentage >= 80.0
+    val percentage: Double    get() = if (limitAmount > 0) (spentAmount / limitAmount) * 100.0 else 0.0
+    val isOverBudget: Boolean  get() = limitAmount > 0 && spentAmount > limitAmount
+    val isNearLimit: Boolean   get() = percentage >= 80.0 && !isOverBudget
+    val isBelowMin: Boolean    get() = minGoal > 0 && spentAmount < minGoal
+    val isWithinGoals: Boolean get() = !isOverBudget && (!isBelowMin || minGoal == 0.0)
+    val statusLabel: String    get() = when {
+        isOverBudget  -> "OVER LIMIT"
+        isNearLimit   -> "NEAR LIMIT"
+        isBelowMin    -> "BELOW TARGET"
+        else          -> "ON TRACK"
+    }
 }
 
 @Entity(tableName = "goals")

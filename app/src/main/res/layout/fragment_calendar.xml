@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="@color/bg_primary"
+    android:padding="16dp">
+
+    <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp">
+        <TextView android:id="@+id/tvMonth"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="January 2026" android:textSize="22sp" android:textStyle="bold"
+            android:textColor="@color/text_primary" android:layout_centerVertical="true"/>
+        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true" android:orientation="horizontal">
+            <ImageButton android:id="@+id/btnPrev" android:layout_width="48dp" android:layout_height="48dp"
+                android:src="@drawable/ic_delete" android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Previous Month" android:rotation="90"/>
+            <ImageButton android:id="@+id/btnNext" android:layout_width="48dp" android:layout_height="48dp"
+                android:src="@drawable/ic_delete" android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Next Month" android:rotation="-90"/>
+        </LinearLayout>
+    </RelativeLayout>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:layout_marginBottom="8dp">
+        <TextView style="@style/CalendarDayHeader" android:text="@string/day_s"/>
+        <TextView style="@style/CalendarDayHeader" android:text="@string/day_m"/>
+        <TextView style="@style/CalendarDayHeader" android:text="@string/day_t"/>
+        <TextView style="@style/CalendarDayHeader" android:text="@string/day_w"/>
+        <TextView style="@style/CalendarDayHeader" android:text="@string/day_t"/>
+        <TextView style="@style/CalendarDayHeader" android:text="@string/day_f"/>
+        <TextView style="@style/CalendarDayHeader" android:text="@string/day_s"/>
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvCalendar"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:nestedScrollingEnabled="false"/>
+
+    <View android:layout_width="match_parent" android:layout_height="16dp"/>
+
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="@string/spending_intensity" android:textSize="12sp" android:textStyle="bold"
+        android:textColor="@color/text_muted" android:layout_marginBottom="8dp"/>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical">
+        <View android:layout_width="12dp" android:layout_height="12dp" android:background="#1C1F27" android:layout_marginEnd="4dp"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/intensity_none" android:textSize="10sp" android:textColor="@color/text_muted" android:layout_marginEnd="12dp"/>
+        <View android:layout_width="12dp" android:layout_height="12dp" android:background="#22C55E" android:layout_marginEnd="4dp"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/intensity_low" android:textSize="10sp" android:textColor="@color/text_muted" android:layout_marginEnd="12dp"/>
+        <View android:layout_width="12dp" android:layout_height="12dp" android:background="#F59E0B" android:layout_marginEnd="4dp"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/intensity_med" android:textSize="10sp" android:textColor="@color/text_muted" android:layout_marginEnd="12dp"/>
+        <View android:layout_width="12dp" android:layout_height="12dp" android:background="#EF4444" android:layout_marginEnd="4dp"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/intensity_high" android:textSize="10sp" android:textColor="@color/text_muted"/>
+    </LinearLayout>
+
+</LinearLayout>

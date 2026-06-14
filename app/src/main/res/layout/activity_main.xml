@@ -14,5 +14,6 @@
         android:background="@color/bg_secondary"
         app:itemIconTint="@color/bottom_nav_selector"
         app:itemTextColor="@color/bottom_nav_selector"
+        app:labelVisibilityMode="labeled"
         app:menu="@menu/bottom_nav_menu"/>
 </LinearLayout>

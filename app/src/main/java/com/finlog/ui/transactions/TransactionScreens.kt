@@ -30,6 +30,8 @@ import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
+import com.finlog.ui.gamification.GamificationManager
+
 // ── ViewModel ──────────────────────────────────────────────────────
 class TransactionViewModel(private val repo: Repository) : ViewModel() {
     val transactions = repo.getTransactions().asLiveData()
@@ -157,10 +159,19 @@ class AddEditTransactionFragment : Fragment() {
             if (amt == null || amt <= 0) { b.tilAmount.error = "Enter a valid amount"; return@setOnClickListener }
             b.tilAmount.error = null
             val interval = if (b.switchRecurring.isChecked) listOf("DAILY","WEEKLY","MONTHLY","ANNUALLY")[b.spinnerRecurring.selectedItemPosition] else "NONE"
-            vm.add(Transaction(amount=amt, type=txType, categoryId=catId, categoryName=catName,
+            val tx = Transaction(amount=amt, type=txType, categoryId=catId, categoryName=catName,
                 description=b.etDescription.text.toString(), date=selectedDate,
                 startTime=selectedStart, endTime=selectedEnd, walletId=walletId,
-                photoPath=photoPath, isRecurring=b.switchRecurring.isChecked, recurringInterval=interval))
+                photoPath=photoPath, isRecurring=b.switchRecurring.isChecked, recurringInterval=interval)
+            vm.add(tx)
+
+            // Gamification
+            GamificationManager.recordLogToday(requireContext())
+            GamificationManager.addPoints(requireContext(), 10)
+            vm.transactions.value?.size?.let { count ->
+                GamificationManager.checkFirstTransaction(requireContext(), count + 1)
+            }
+
             Toast.makeText(requireContext(), "Saved!", Toast.LENGTH_SHORT).show()
             findNavController().navigateUp()
         }
@@ -229,7 +240,13 @@ class TransactionDetailFragment : Fragment() {
             b.tvRecurring.text   = if (tx.isRecurring) "Recurring: ${tx.recurringInterval}" else "One-time"
             if (tx.photoPath.isNotEmpty()) {
                 b.cardPhoto.visibility = View.VISIBLE
-                Glide.with(requireContext()).load(tx.photoPath).centerCrop().into(b.ivPhoto)
+                Glide.with(requireContext())
+                    .load(if (tx.photoPath.startsWith("content://")) Uri.parse(tx.photoPath) else File(tx.photoPath))
+                    .centerCrop()
+                    .placeholder(R.drawable.ic_camera)
+                    .into(b.ivPhoto)
+            } else {
+                b.cardPhoto.visibility = View.GONE
             }
             b.btnDelete.setOnClickListener {
                 AlertDialog.Builder(requireContext()).setTitle("Delete Transaction")

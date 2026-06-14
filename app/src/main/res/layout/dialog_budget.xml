@@ -8,9 +8,18 @@
     <Spinner android:id="@+id/spinnerCategory"
         android:layout_width="match_parent" android:layout_height="48dp"
         android:layout_marginBottom="12dp"/>
+
     <com.google.android.material.textfield.TextInputLayout
         style="@style/FinLog.TextInput" android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:hint="Monthly limit (R)" app:prefixText="R ">
+        android:hint="@string/min_target_label" app:prefixText="R " android:layout_marginBottom="12dp">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etMinGoal"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:inputType="numberDecimal" android:textColor="@color/text_primary"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/FinLog.TextInput" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:hint="@string/max_limit_label" app:prefixText="R ">
         <com.google.android.material.textfield.TextInputEditText android:id="@+id/etAmount"
             android:layout_width="match_parent" android:layout_height="wrap_content"
             android:inputType="numberDecimal" android:textColor="@color/text_primary"/>

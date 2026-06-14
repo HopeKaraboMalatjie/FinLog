@@ -10,12 +10,16 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Update
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.finlog.data.model.Transaction
 import com.finlog.data.model.Category
 import com.finlog.data.model.Budget
 import com.finlog.data.model.Goal
 import com.finlog.data.model.Wallet
 import kotlinx.coroutines.flow.Flow
+
+data class CategoryTotal(val categoryName: String, val total: Double)
 
 @Dao
 interface TransactionDao {
@@ -34,6 +38,15 @@ interface TransactionDao {
     @Query("SELECT COALESCE(SUM(amount),0.0) FROM transactions WHERE type=:type AND date BETWEEN :from AND :to")
     suspend fun sumByType(type: String, from: Long, to: Long): Double
     @Query("SELECT * FROM transactions WHERE id=:id LIMIT 1") suspend fun getById(id: String): Transaction?
+
+    @Query("""
+        SELECT categoryName, COALESCE(SUM(amount), 0.0) as total
+        FROM transactions
+        WHERE type = 'EXPENSE' AND date BETWEEN :from AND :to
+        GROUP BY categoryId
+        ORDER BY total DESC
+    """)
+    suspend fun getCategoryTotals(from: Long, to: Long): List<CategoryTotal>
 }
 
 @Dao
@@ -76,7 +89,7 @@ interface WalletDao {
 
 @Database(
     entities = [Transaction::class, Category::class, Budget::class, Goal::class, Wallet::class],
-    version = 1,
+    version = 2,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -88,8 +101,17 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
+
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE budgets ADD COLUMN minGoal REAL NOT NULL DEFAULT 0.0")
+                db.execSQL("ALTER TABLE budgets ADD COLUMN categoryEmoji TEXT NOT NULL DEFAULT '💰'")
+            }
+        }
+
         fun get(ctx: Context): AppDatabase = INSTANCE ?: synchronized(this) {
             Room.databaseBuilder(ctx.applicationContext, AppDatabase::class.java, "finlog.db")
+                .addMigrations(MIGRATION_1_2)
                 .build().also { INSTANCE = it }
         }
     }

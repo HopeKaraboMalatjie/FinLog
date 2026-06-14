@@ -91,4 +91,6 @@ class Repository(
         val e = Calendar.getInstance().apply { set(year, month-1, getActualMaximum(Calendar.DAY_OF_MONTH), 23, 59, 59) }.timeInMillis
         return txDao.sumByType(type, s, e)
     }
+
+    suspend fun getCategoryTotals(from: Long, to: Long) = txDao.getCategoryTotals(from, to)
 }
