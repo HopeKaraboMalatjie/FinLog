@@ -45,6 +45,18 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnManageWallets"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/manage_wallets" app:backgroundTint="@color/green_primary"
+            android:textColor="@color/text_primary" app:cornerRadius="10dp"
+            android:layout_marginBottom="8dp"/>
+
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnManageGoals"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Manage Savings Goals" app:backgroundTint="@color/green_primary"
+            android:textColor="@color/text_primary" app:cornerRadius="10dp"
+            android:layout_marginBottom="16dp"/>
+
         <com.google.android.material.button.MaterialButton android:id="@+id/btnLogout"
             android:layout_width="match_parent" android:layout_height="wrap_content"
             android:text="Log Out" app:backgroundTint="@color/bg_secondary"

@@ -3,20 +3,34 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent" android:layout_height="match_parent"
     android:background="@color/green_dark">
+
     <TextView android:id="@+id/tvLeaf" android:layout_width="wrap_content" android:layout_height="wrap_content"
-        android:text="🌿" android:textSize="56sp"
+        android:text="🌿" android:textSize="86sp"
         app:layout_constraintBottom_toTopOf="@id/tvAppName" app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="packed" android:layout_marginBottom="12dp"/>
-    <TextView android:id="@+id/tvAppName" android:layout_width="wrap_content" android:layout_height="wrap_content"
-        android:text="FinLog" android:textSize="52sp" android:textStyle="bold"
-        android:textColor="@color/text_primary" android:fontFamily="serif"
+
+    <TextView
+        android:id="@+id/tvAppName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="FinLog"
+        android:textSize="42sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary"
+        android:fontFamily="sans-serif-medium"
         app:layout_constraintTop_toBottomOf="@id/tvLeaf" app:layout_constraintBottom_toTopOf="@id/tvTagline"
         app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginBottom="8dp"/>
-    <TextView android:id="@+id/tvTagline" android:layout_width="wrap_content" android:layout_height="wrap_content"
-        android:text="@string/your_financial_log" android:textSize="12sp"
-        android:textColor="@color/green_accent" android:letterSpacing="0.2"
+
+    <TextView
+        android:id="@+id/tvTagline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/your_financial_log"
+        android:textSize="12sp"
+        android:textColor="@color/green_accent"
+        android:letterSpacing="0.2"
         app:layout_constraintTop_toBottomOf="@id/tvAppName" app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginBottom="120dp"/>

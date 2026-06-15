@@ -15,10 +15,14 @@
         <action android:id="@+id/action_transactions_to_detail"   app:destination="@id/transactionDetailFragment"/>
     </fragment>
 
-    <fragment android:id="@+id/addEditTransactionFragment" android:name="com.finlog.ui.transactions.AddEditTransactionFragment" android:label="Add Transaction"/>
+    <fragment android:id="@+id/addEditTransactionFragment" android:name="com.finlog.ui.transactions.AddEditTransactionFragment" android:label="Add Transaction">
+        <argument android:name="defaultType" app:argType="string" android:defaultValue="EXPENSE"/>
+        <argument android:name="transactionId" app:argType="string" android:defaultValue=""/>
+    </fragment>
 
     <fragment android:id="@+id/transactionDetailFragment" android:name="com.finlog.ui.transactions.TransactionDetailFragment" android:label="Detail">
         <argument android:name="transactionId" app:argType="string"/>
+        <action android:id="@+id/action_detail_to_edit" app:destination="@id/addEditTransactionFragment"/>
     </fragment>
 
     <fragment android:id="@+id/budgetFragment"  android:name="com.finlog.ui.budget.BudgetFragment"   android:label="Budget"/>

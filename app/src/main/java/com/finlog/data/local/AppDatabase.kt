@@ -38,6 +38,14 @@ interface TransactionDao {
     @Query("SELECT COALESCE(SUM(amount),0.0) FROM transactions WHERE type=:type AND date BETWEEN :from AND :to")
     suspend fun sumByType(type: String, from: Long, to: Long): Double
     @Query("SELECT * FROM transactions WHERE id=:id LIMIT 1") suspend fun getById(id: String): Transaction?
+    @Query("DELETE FROM transactions WHERE id = :id") suspend fun deleteById(id: String): Int
+    
+    @Query("""
+        SELECT 
+            (SELECT COALESCE(SUM(amount), 0.0) FROM transactions WHERE type = 'INCOME') - 
+            (SELECT COALESCE(SUM(amount), 0.0) FROM transactions WHERE type = 'EXPENSE')
+    """)
+    fun totalCalculatedBalance(): Flow<Double>
 
     @Query("""
         SELECT categoryName, COALESCE(SUM(amount), 0.0) as total
@@ -62,6 +70,7 @@ interface BudgetDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insert(b: Budget): Long
     @Delete suspend fun delete(b: Budget): Int
     @Query("SELECT * FROM budgets WHERE month=:month AND year=:year") fun getForMonth(month: Int, year: Int): Flow<List<Budget>>
+    @Query("SELECT * FROM budgets WHERE month=:month AND year=:year") suspend fun getForMonthList(month: Int, year: Int): List<Budget>
     @Query("SELECT * FROM budgets WHERE categoryId=:catId AND month=:month AND year=:year LIMIT 1")
     suspend fun getForCategory(catId: String, month: Int, year: Int): Budget?
     @Query("UPDATE budgets SET spentAmount=:amount WHERE id=:id") suspend fun updateSpent(id: String, amount: Double): Int

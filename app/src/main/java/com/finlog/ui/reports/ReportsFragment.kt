@@ -28,46 +28,57 @@ class ReportsViewModel(private val repo: Repository) : ViewModel() {
 
     data class MonthData(val label: String, val income: Float, val expense: Float)
 
-    val sixMonths = MutableLiveData<List<MonthData>>()
-    val categoryTotals = MutableLiveData<List<CategoryTotal>>()
-    val currentBudgets = MutableLiveData<List<Budget>>()
-
-    var fromMs = run {
-        Calendar.getInstance().apply { set(Calendar.DAY_OF_MONTH, 1); set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }.timeInMillis
-    }
-    var toMs = System.currentTimeMillis()
+    private val _period = MutableLiveData<Pair<Long, Long>>(
+        Calendar.getInstance().apply { 
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0) 
+        }.timeInMillis to System.currentTimeMillis()
+    )
 
     private val MON = arrayOf("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
 
-    init { loadAll() }
-
-    fun loadAll() = viewModelScope.launch {
-        // 6-month chart
-        val months = (5 downTo 0).map { off ->
-            val cal = Calendar.getInstance().apply { add(Calendar.MONTH, -off) }
-            val m = cal.get(Calendar.MONTH) + 1; val y = cal.get(Calendar.YEAR)
-            MonthData(MON[m-1],
-                repo.monthlyTotal(Transaction.TYPE_INCOME, m, y). LeonardtoFloat(),
-                repo.monthlyTotal(Transaction.TYPE_EXPENSE, m, y). LeonardtoFloat())
+    // Reactive: Observe transactions to update 6-month chart automatically
+    val sixMonths: LiveData<List<MonthData>> = repo.getTransactions().asLiveData().switchMap {
+        liveData {
+            val months = (5 downTo 0).map { off ->
+                val cal = Calendar.getInstance().apply { add(Calendar.MONTH, -off) }
+                val m = cal.get(Calendar.MONTH) + 1; val y = cal.get(Calendar.YEAR)
+                MonthData(MON[m-1],
+                    repo.monthlyTotal(Transaction.TYPE_INCOME, m, y).toFloat(),
+                    repo.monthlyTotal(Transaction.TYPE_EXPENSE, m, y).toFloat())
+            }
+            emit(months)
         }
-        sixMonths.value = months
-
-        // Real category spending for selected period
-        categoryTotals.value = repo.getCategoryTotals(fromMs, toMs)
-
-        // Current month budgets (for goal lines on chart)
-        val cal = Calendar.getInstance()
-        repo.getBudgets(cal.get(Calendar.MONTH) + 1, cal.get(Calendar.YEAR))
-            .collect { currentBudgets.value = it }
     }
 
-    private fun Double.LeonardtoFloat(): Float = this.toFloat()
+    // Reactive: Updates when transactions OR period changes
+    val categoryTotals: LiveData<List<CategoryTotal>> = repo.getTransactions().asLiveData().switchMap {
+        _period.switchMap { period ->
+            liveData {
+                emit(repo.getCategoryTotals(period.first, period.second))
+            }
+        }
+    }
+
+    // Reactive: Budgets for the current month
+    val currentBudgets: LiveData<List<Budget>> = repo.getTransactions().asLiveData().switchMap {
+        val cal = Calendar.getInstance()
+        repo.getBudgets(cal.get(Calendar.MONTH) + 1, cal.get(Calendar.YEAR)).asLiveData()
+    }
+
+    var fromMs: Long
+        get() = _period.value?.first ?: 0L
+        set(value) { _period.value = value to (_period.value?.second ?: System.currentTimeMillis()) }
+
+    var toMs: Long
+        get() = _period.value?.second ?: 0L
+        set(value) { _period.value = (_period.value?.first ?: 0L) to value }
 
     fun reloadForPeriod(from: Long, to: Long) {
-        fromMs = from; toMs = to
-        viewModelScope.launch {
-            categoryTotals.value = repo.getCategoryTotals(from, to)
-        }
+        _period.value = from to to
     }
 }
 
@@ -200,7 +211,7 @@ class ReportsFragment : Fragment() {
             b.pieChart.invalidate()
         }
 
-        vm.currentBudgets.observe(viewLifecycleOwner) { vm.loadAll() }
+        vm.currentBudgets.observe(viewLifecycleOwner) { /* Reactive updates via switchMap */ }
     }
 
     override fun onDestroyView() { super.onDestroyView(); _b = null }

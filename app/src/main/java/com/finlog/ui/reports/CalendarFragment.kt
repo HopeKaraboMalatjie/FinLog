@@ -1,6 +1,5 @@
 package com.finlog.ui.reports
 
-import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
 import android.view.*
@@ -25,7 +24,39 @@ class CalendarViewModel(private val repo: Repository) : ViewModel() {
     val month: LiveData<Int> = _month
     val year: LiveData<Int> = _year
 
-    val dailySpending = MutableLiveData<Map<Int, Double>>()
+    // Reactive: Automatically updates daily spending when transactions change or month/year changes
+    val dailySpending: LiveData<Map<Int, Double>> = repo.getTransactions().asLiveData().switchMap {
+        _month.switchMap { m ->
+            _year.switchMap { y ->
+                liveData {
+                    val cal = Calendar.getInstance().apply {
+                        set(Calendar.MONTH, m)
+                        set(Calendar.YEAR, y)
+                        set(Calendar.DAY_OF_MONTH, 1)
+                        set(Calendar.HOUR_OF_DAY, 0)
+                        set(Calendar.MINUTE, 0)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }
+                    val from = cal.timeInMillis
+                    cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
+                    cal.set(Calendar.HOUR_OF_DAY, 23)
+                    cal.set(Calendar.MINUTE, 59)
+                    val to = cal.timeInMillis
+
+                    // Fetching from repo in a reactive way (though we already have the list from getTransactions, 
+                    // we re-filter for the specific range to be precise)
+                    val txs = repo.getByDateRange(from, to).first()
+                    val map = txs.filter { it.type == Transaction.TYPE_EXPENSE }
+                        .groupBy {
+                            val c = Calendar.getInstance().apply { timeInMillis = it.date }
+                            c.get(Calendar.DAY_OF_MONTH)
+                        }.mapValues { it.value.sumOf { t -> t.amount } }
+                    emit(map)
+                }
+            }
+        }
+    }
 
     fun navigate(d: Int) {
         val cal = Calendar.getInstance().apply {
@@ -35,39 +66,18 @@ class CalendarViewModel(private val repo: Repository) : ViewModel() {
         }
         _month.value = cal.get(Calendar.MONTH)
         _year.value = cal.get(Calendar.YEAR)
-        loadData()
     }
+}
 
-    fun loadData() = viewModelScope.launch {
-        val cal = Calendar.getInstance().apply {
-            set(Calendar.MONTH, _month.value ?: 0)
-            set(Calendar.YEAR, _year.value ?: 2026)
-            set(Calendar.DAY_OF_MONTH, 1)
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        val from = cal.timeInMillis
-        cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
-        cal.set(Calendar.HOUR_OF_DAY, 23)
-        cal.set(Calendar.MINUTE, 59)
-        val to = cal.timeInMillis
-
-        val txs = repo.getByDateRange(from, to).first()
-        val map = txs.filter { it.type == Transaction.TYPE_EXPENSE }
-            .groupBy {
-                val c = Calendar.getInstance().apply { timeInMillis = it.date }
-                c.get(Calendar.DAY_OF_MONTH)
-            }.mapValues { it.value.sumOf { t -> t.amount } }
-        dailySpending.value = map
-    }
+class CalendarVMFactory(private val repo: Repository) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T = CalendarViewModel(repo) as T
 }
 
 class CalendarFragment : Fragment() {
     private var _b: FragmentCalendarBinding? = null
     private val b get() = _b!!
-    private val vm: CalendarViewModel by viewModels { ReportsVMFactory((requireActivity().application as FinLogApp).repo) }
+    private val vm: CalendarViewModel by viewModels { CalendarVMFactory((requireActivity().application as FinLogApp).repo) }
 
     override fun onCreateView(i: LayoutInflater, c: ViewGroup?, s: Bundle?): View {
         _b = FragmentCalendarBinding.inflate(i, c, false); return b.root
@@ -81,10 +91,7 @@ class CalendarFragment : Fragment() {
         vm.year.observe(viewLifecycleOwner) { updateTitle() }
         vm.dailySpending.observe(viewLifecycleOwner) { render() }
 
-        b.btnPrev.setOnClickListener { vm.navigate(-1) }
         b.btnNext.setOnClickListener { vm.navigate(1) }
-
-        vm.loadData()
     }
 
     private fun updateTitle() {
@@ -106,7 +113,7 @@ class CalendarFragment : Fragment() {
         val items = mutableListOf<CalendarDay>()
 
         for (i in 0 until firstDay) items.add(CalendarDay(0, 0.0))
-        for (i in 1..maxDays) items.add(CalendarDay(i, vm.dailySpending.value?.get(i) ?: 0.0))
+        for (dayNum in 1..maxDays) items.add(CalendarDay(dayNum, vm.dailySpending.value?.get(dayNum) ?: 0.0))
 
         b.rvCalendar.adapter = CalendarAdapter(items)
     }
@@ -117,7 +124,7 @@ class CalendarFragment : Fragment() {
 data class CalendarDay(val day: Int, val amount: Double)
 
 class CalendarAdapter(private val list: List<CalendarDay>) : RecyclerView.Adapter<CalendarAdapter.VH>() {
-    inner class VH(val b: ItemCalendarDayBinding) : RecyclerView.ViewHolder(b.root)
+    class VH(val b: ItemCalendarDayBinding) : RecyclerView.ViewHolder(b.root)
     override fun onCreateViewHolder(p: ViewGroup, t: Int) = VH(ItemCalendarDayBinding.inflate(LayoutInflater.from(p.context), p, false))
     override fun onBindViewHolder(h: VH, pos: Int) {
         val d = list[pos]

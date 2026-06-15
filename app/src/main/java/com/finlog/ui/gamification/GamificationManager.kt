@@ -49,18 +49,25 @@ object GamificationManager {
     fun getStreak(ctx: Context) = getPrefs(ctx).getInt("log_streak", 0)
 
     // ── Badge management ─────────────────────────────────────────────
-    fun unlockBadge(ctx: Context, badgeId: String) {
+    fun unlockBadge(ctx: Context, badgeId: String): Boolean {
+        if (isBadgeEarned(ctx, badgeId)) return false
         getPrefs(ctx).edit().putBoolean("badge_$badgeId", true).apply()
+        return true
     }
 
     fun isBadgeEarned(ctx: Context, badgeId: String): Boolean =
         getPrefs(ctx).getBoolean("badge_$badgeId", false)
 
     // First transaction badge — call this when first transaction is added
-    fun checkFirstTransaction(ctx: Context, txCount: Int) {
-        if (txCount >= 1 && !isBadgeEarned(ctx, "first_tx")) unlockBadge(ctx, "first_tx")
-        if (txCount >= 10 && !isBadgeEarned(ctx, "tx_10")) unlockBadge(ctx, "tx_10")
-        if (txCount >= 50 && !isBadgeEarned(ctx, "tx_50")) unlockBadge(ctx, "tx_50")
+    fun checkFirstTransaction(ctx: Context, txCount: Int): Badge? {
+        if (txCount >= 50 && unlockBadge(ctx, "tx_50")) return getBadge(ctx, "tx_50")
+        if (txCount >= 10 && unlockBadge(ctx, "tx_10")) return getBadge(ctx, "tx_10")
+        if (txCount >= 1 && unlockBadge(ctx, "first_tx")) return getBadge(ctx, "first_tx")
+        return null
+    }
+
+    private fun getBadge(ctx: Context, id: String): Badge? {
+        return getAllBadges(ctx).find { it.id == id }
     }
 
     // Budget master — call this when all budgets are within limit

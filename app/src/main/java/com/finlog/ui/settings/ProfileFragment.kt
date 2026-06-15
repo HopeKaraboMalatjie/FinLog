@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.view.*
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
+import com.finlog.R
 import com.finlog.databinding.FragmentProfileBinding
 import com.finlog.ui.auth.AuthActivity
 
@@ -29,6 +31,15 @@ class ProfileFragment : Fragment() {
             prefs.edit().putFloat("min_goal", min).putFloat("max_goal", max).apply()
             Toast.makeText(requireContext(), "Goals saved!", Toast.LENGTH_SHORT).show()
         }
+
+        b.btnManageWallets.setOnClickListener {
+            findNavController().navigate(R.id.walletsFragment)
+        }
+
+        b.btnManageGoals.setOnClickListener {
+            findNavController().navigate(R.id.goalsFragment)
+        }
+
         b.btnLogout.setOnClickListener {
             prefs.edit().putBoolean("logged_in", false).apply()
             startActivity(Intent(requireActivity(), AuthActivity::class.java))

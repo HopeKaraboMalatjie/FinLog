@@ -45,10 +45,12 @@ class LoginFragment : Fragment() {
             if (email != prefs.getString("email","") || pass != prefs.getString("password","")) {
                 Toast.makeText(requireContext(), "Incorrect email or password", Toast.LENGTH_LONG).show(); return@setOnClickListener
             }
-            lifecycleScope.launch { (requireActivity().application as FinLogApp).repo.seedDefaultCategories() }
-            prefs.edit().putBoolean("logged_in", true).apply()
-            startActivity(Intent(requireActivity(), MainActivity::class.java))
-            requireActivity().finish()
+            lifecycleScope.launch {
+                (requireActivity().application as FinLogApp).repo.seedDefaultCategories()
+                prefs.edit().putBoolean("logged_in", true).apply()
+                startActivity(Intent(requireActivity(), MainActivity::class.java))
+                requireActivity().finish()
+            }
         }
         b.tvRegister.setOnClickListener { findNavController().navigate(R.id.action_login_to_register) }
     }
@@ -79,12 +81,14 @@ class RegisterFragment : Fragment() {
             else if (!pass.any { it.isDigit() }) { b.tilPassword.error = "Need 1 digit"; ok = false }
             if (pass != confirm) { b.tilConfirmPassword.error = "Passwords do not match"; ok = false }
             if (!ok) return@setOnClickListener
-            requireContext().getSharedPreferences("finlog_prefs", 0).edit()
-                .putString("display_name", name).putString("email", email)
-                .putString("password", pass).putBoolean("logged_in", true).apply()
-            lifecycleScope.launch { (requireActivity().application as FinLogApp).repo.seedDefaultCategories() }
-            startActivity(Intent(requireActivity(), MainActivity::class.java))
-            requireActivity().finish()
+            lifecycleScope.launch {
+                requireContext().getSharedPreferences("finlog_prefs", 0).edit()
+                    .putString("display_name", name).putString("email", email)
+                    .putString("password", pass).putBoolean("logged_in", true).apply()
+                (requireActivity().application as FinLogApp).repo.seedDefaultCategories()
+                startActivity(Intent(requireActivity(), MainActivity::class.java))
+                requireActivity().finish()
+            }
         }
         b.tvLogin.setOnClickListener { findNavController().navigateUp() }
     }

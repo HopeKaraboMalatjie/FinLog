@@ -21,6 +21,12 @@ class GamificationFragment : Fragment() {
     override fun onViewCreated(view: View, s: Bundle?) {
         super.onViewCreated(view, s)
         val ctx = requireContext()
+        
+        // Ensure badges are up to date
+        val gamificationPrefs = ctx.getSharedPreferences("finlog_gamification", 0)
+        val txCount = gamificationPrefs.getInt("tx_count_total", 0)
+        GamificationManager.checkFirstTransaction(ctx, txCount)
+
         val streak = GamificationManager.getStreak(ctx)
         val points = GamificationManager.getPoints(ctx)
         val level = GamificationManager.getLevelName(points)

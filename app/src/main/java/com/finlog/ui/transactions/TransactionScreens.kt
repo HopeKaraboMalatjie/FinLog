@@ -22,6 +22,7 @@ import com.finlog.R
 import com.finlog.data.model.*
 import com.finlog.data.repository.Repository
 import com.finlog.databinding.*
+import com.finlog.ui.gamification.GamificationManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,23 +31,34 @@ import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
-import com.finlog.ui.gamification.GamificationManager
-
 // ── ViewModel ──────────────────────────────────────────────────────
 class TransactionViewModel(private val repo: Repository) : ViewModel() {
-    val transactions = repo.getTransactions().asLiveData()
-    val categories   = repo.getCategories().asLiveData()
-    val wallets      = repo.getWallets().asLiveData()
+    private val _filterType = MutableLiveData<String?>(null)
+    private val _filterRange = MutableLiveData<Pair<Long, Long>?>(null)
+
+    // Strictly Reactive: Every UI list is bound directly to the database via Repository Flow/LiveData
+    val transactions: LiveData<List<Transaction>> = _filterType.switchMap { type ->
+        _filterRange.switchMap { range ->
+            when {
+                type != null -> repo.getByType(type).asLiveData()
+                range != null -> repo.getByDateRange(range.first, range.second).asLiveData()
+                else -> repo.getTransactions().asLiveData()
+            }
+        }
+    }
+
+    val categories = repo.getCategories().asLiveData()
+    val wallets    = repo.getWallets().asLiveData()
+
+    fun setFilterType(type: String?) { _filterType.value = type }
+    fun setFilterRange(from: Long, to: Long) { _filterRange.value = Pair(from, to) }
+    fun clearFilters() { _filterType.value = null; _filterRange.value = null }
+
     fun add(t: Transaction)    = viewModelScope.launch { repo.addTransaction(t) }
     fun update(t: Transaction) = viewModelScope.launch { repo.updateTransaction(t) }
     fun delete(t: Transaction) = viewModelScope.launch { repo.deleteTransaction(t) }
-    fun filtered(catId: String?, type: String?, from: Long?, to: Long?): LiveData<List<Transaction>> = when {
-        catId != null -> repo.getByCategory(catId).asLiveData()
-        type  != null -> repo.getByType(type).asLiveData()
-        from  != null && to != null -> repo.getByDateRange(from, to).asLiveData()
-        else -> transactions
-    }
 }
+
 class TransactionVMFactory(private val repo: Repository) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(c: Class<T>): T = TransactionViewModel(repo) as T
@@ -65,27 +77,30 @@ class TransactionsFragment : Fragment() {
         val adapter = TransactionAdapter { tx -> findNavController().navigate(TransactionsFragmentDirections.actionTransactionsToDetail(tx.id)) }
         b.rvTransactions.layoutManager = LinearLayoutManager(requireContext())
         b.rvTransactions.adapter = adapter
-        b.fabAdd.setOnClickListener { findNavController().navigate(R.id.action_transactions_to_addEdit) }
-        b.chipIncome.setOnCheckedChangeListener { _, ch -> load(if (ch) Transaction.TYPE_INCOME else null, null, null, null, adapter) }
-        b.chipExpense.setOnCheckedChangeListener { _, ch -> load(null, if (ch) Transaction.TYPE_EXPENSE else null, null, null, adapter) }
-        b.btnFilterDate.setOnClickListener { pickDate(adapter) }
-        b.btnClearFilter.setOnClickListener { b.chipGroupType.clearCheck(); load(null, null, null, null, adapter) }
-        load(null, null, null, null, adapter)
-    }
-
-    private fun load(catId: String?, type: String?, from: Long?, to: Long?, adapter: TransactionAdapter) {
-        vm.filtered(catId, type, from, to).observe(viewLifecycleOwner) { list ->
-            adapter.submitList(list); b.tvEmpty.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
+        
+        b.fabAdd.setOnClickListener { 
+            findNavController().navigate(TransactionsFragmentDirections.actionTransactionsToAddEdit())
         }
+
+        // BINDING: Direct reactive link to DB
+        vm.transactions.observe(viewLifecycleOwner) { list ->
+            adapter.submitList(list)
+            b.tvEmpty.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
+        }
+
+        b.chipIncome.setOnCheckedChangeListener { _, ch -> vm.setFilterType(if (ch) Transaction.TYPE_INCOME else null) }
+        b.chipExpense.setOnCheckedChangeListener { _, ch -> vm.setFilterType(if (ch) Transaction.TYPE_EXPENSE else null) }
+        b.btnFilterDate.setOnClickListener { pickDate() }
+        b.btnClearFilter.setOnClickListener { b.chipGroupType.clearCheck(); vm.clearFilters() }
     }
 
-    private fun pickDate(adapter: TransactionAdapter) {
+    private fun pickDate() {
         val cal = Calendar.getInstance()
         DatePickerDialog(requireContext(), { _, y, m, d ->
             val s = Calendar.getInstance().apply { set(y,m,d,0,0,0) }.timeInMillis
             DatePickerDialog(requireContext(), { _, y2, m2, d2 ->
                 val e = Calendar.getInstance().apply { set(y2,m2,d2,23,59,59) }.timeInMillis
-                load(null, null, s, e, adapter)
+                vm.setFilterRange(s, e)
             }, y, m, d).show()
         }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
     }
@@ -98,6 +113,7 @@ class AddEditTransactionFragment : Fragment() {
     private var _b: FragmentAddEditTransactionBinding? = null
     private val b get() = _b!!
     private val vm: TransactionViewModel by viewModels { TransactionVMFactory((requireActivity().application as FinLogApp).repo) }
+    private val args: AddEditTransactionFragmentArgs by navArgs()
 
     private var selectedDate = System.currentTimeMillis()
     private var selectedStart = System.currentTimeMillis()
@@ -107,6 +123,7 @@ class AddEditTransactionFragment : Fragment() {
     private var photoPath = ""; private var cameraUri: Uri? = null
     private val dateFmt = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
     private val timeFmt = SimpleDateFormat("HH:mm", Locale.getDefault())
+    private var editingTx: Transaction? = null
 
     private val pickPhoto = registerForActivityResult(ActivityResultContracts.GetContent()) { uri -> uri?.let { setPhoto(it.toString()) } }
     private val takePhoto = registerForActivityResult(ActivityResultContracts.TakePicture()) { ok -> if (ok) cameraUri?.let { setPhoto(it.toString()) } }
@@ -115,11 +132,49 @@ class AddEditTransactionFragment : Fragment() {
 
     override fun onViewCreated(view: View, s: Bundle?) {
         super.onViewCreated(view, s)
-        updateLabels()
-        b.btnExpense.isChecked = true
+        
+        if (args.transactionId.isNotEmpty()) {
+            lifecycleScope.launch {
+                editingTx = (requireActivity().application as FinLogApp).repo.getById(args.transactionId)
+                editingTx?.let { tx ->
+                    b.etAmount.setText(tx.amount.toString())
+                    b.etDescription.setText(tx.description)
+                    selectedDate = tx.date
+                    selectedStart = tx.startTime
+                    selectedEnd = tx.endTime
+                    catId = tx.categoryId
+                    catName = tx.categoryName
+                    walletId = tx.walletId
+                    txType = tx.type
+                    photoPath = tx.photoPath
+                    b.switchRecurring.isChecked = tx.isRecurring
+                    if (tx.photoPath.isNotEmpty()) setPhoto(tx.photoPath)
+                    
+                    when (txType) {
+                        Transaction.TYPE_INCOME -> b.btnIncome.isChecked = true
+                        Transaction.TYPE_TRANSFER -> b.btnTransfer.isChecked = true
+                        else -> b.btnExpense.isChecked = true
+                    }
+                    updateLabels()
+                }
+            }
+        } else {
+            txType = args.defaultType
+            when (txType) {
+                Transaction.TYPE_INCOME -> b.btnIncome.isChecked = true
+                Transaction.TYPE_TRANSFER -> b.btnTransfer.isChecked = true
+                else -> b.btnExpense.isChecked = true
+            }
+            updateLabels()
+        }
+
         b.toggleType.addOnButtonCheckedListener { _, id, ch ->
             if (!ch) return@addOnButtonCheckedListener
-            txType = when (id) { R.id.btnIncome -> Transaction.TYPE_INCOME; R.id.btnTransfer -> Transaction.TYPE_TRANSFER; else -> Transaction.TYPE_EXPENSE }
+            txType = when (id) { 
+                R.id.btnIncome -> Transaction.TYPE_INCOME
+                R.id.btnTransfer -> Transaction.TYPE_TRANSFER
+                else -> Transaction.TYPE_EXPENSE 
+            }
         }
         b.tvDate.setOnClickListener { pickDate() }
         b.tvStartTime.setOnClickListener { pickTime(true) }
@@ -138,9 +193,11 @@ class AddEditTransactionFragment : Fragment() {
 
         vm.wallets.observe(viewLifecycleOwner) { wallets ->
             if (wallets.isEmpty()) return@observe
-            walletId = wallets.first().id
+            val selectedIdx = if (walletId.isEmpty()) 0 else wallets.indexOfFirst { it.id == walletId }.coerceAtLeast(0)
+            walletId = wallets[selectedIdx].id
             b.spinnerWallet.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, wallets.map { "${it.emoji} ${it.name}" })
                 .also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+            b.spinnerWallet.setSelection(selectedIdx)
             b.spinnerWallet.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
                 override fun onItemSelected(p: android.widget.AdapterView<*>?, v: View?, pos: Int, id: Long) { walletId = wallets[pos].id }
                 override fun onNothingSelected(p: android.widget.AdapterView<*>?) {}
@@ -159,17 +216,31 @@ class AddEditTransactionFragment : Fragment() {
             if (amt == null || amt <= 0) { b.tilAmount.error = "Enter a valid amount"; return@setOnClickListener }
             b.tilAmount.error = null
             val interval = if (b.switchRecurring.isChecked) listOf("DAILY","WEEKLY","MONTHLY","ANNUALLY")[b.spinnerRecurring.selectedItemPosition] else "NONE"
-            val tx = Transaction(amount=amt, type=txType, categoryId=catId, categoryName=catName,
+            
+            val tx = editingTx?.copy(
+                amount=amt, type=txType, categoryId=catId, categoryName=catName,
+                description=b.etDescription.text.toString(), date=selectedDate,
+                startTime=selectedStart, endTime=selectedEnd, walletId=walletId,
+                photoPath=photoPath, isRecurring=b.switchRecurring.isChecked, recurringInterval=interval
+            ) ?: Transaction(amount=amt, type=txType, categoryId=catId, categoryName=catName,
                 description=b.etDescription.text.toString(), date=selectedDate,
                 startTime=selectedStart, endTime=selectedEnd, walletId=walletId,
                 photoPath=photoPath, isRecurring=b.switchRecurring.isChecked, recurringInterval=interval)
-            vm.add(tx)
+            
+            if (editingTx != null) vm.update(tx) else vm.add(tx)
 
             // Gamification
-            GamificationManager.recordLogToday(requireContext())
-            GamificationManager.addPoints(requireContext(), 10)
-            vm.transactions.value?.size?.let { count ->
-                GamificationManager.checkFirstTransaction(requireContext(), count + 1)
+            if (editingTx == null) {
+                val gPrefs = requireContext().getSharedPreferences("finlog_gamification", 0)
+                val newTotal = gPrefs.getInt("tx_count_total", 0) + 1
+                gPrefs.edit().putInt("tx_count_total", newTotal).apply()
+                
+                GamificationManager.recordLogToday(requireContext())
+                GamificationManager.addPoints(requireContext(), 10)
+                val unlocked = GamificationManager.checkFirstTransaction(requireContext(), newTotal)
+                if (unlocked != null) {
+                    GamificationManager.showBadgeUnlocked(this, unlocked)
+                }
             }
 
             Toast.makeText(requireContext(), "Saved!", Toast.LENGTH_SHORT).show()
@@ -227,7 +298,7 @@ class TransactionDetailFragment : Fragment() {
 
     override fun onViewCreated(view: View, s: Bundle?) {
         super.onViewCreated(view, s)
-        CoroutineScope(Dispatchers.Main).launch {
+        lifecycleScope.launch {
             val tx = (requireActivity().application as FinLogApp).repo.getById(args.transactionId) ?: run { findNavController().navigateUp(); return@launch }
             b.tvAmount.text  = "${if (tx.type == Transaction.TYPE_INCOME) "+" else "-"}${fmt.format(tx.amount)}"
             b.tvAmount.setTextColor(requireContext().getColor(if (tx.type == Transaction.TYPE_INCOME) R.color.income_green else R.color.expense_red))
@@ -238,6 +309,7 @@ class TransactionDetailFragment : Fragment() {
             b.tvEndTime.text     = "End:   ${timeFmt.format(Date(tx.endTime))}"
             b.tvPayment.text     = tx.paymentMethod
             b.tvRecurring.text   = if (tx.isRecurring) "Recurring: ${tx.recurringInterval}" else "One-time"
+            
             if (tx.photoPath.isNotEmpty()) {
                 b.cardPhoto.visibility = View.VISIBLE
                 Glide.with(requireContext())
@@ -248,10 +320,22 @@ class TransactionDetailFragment : Fragment() {
             } else {
                 b.cardPhoto.visibility = View.GONE
             }
+
+            b.btnEdit.setOnClickListener {
+                val action = TransactionDetailFragmentDirections.actionDetailToEdit(tx.type, tx.id)
+                findNavController().navigate(action)
+            }
+
             b.btnDelete.setOnClickListener {
                 AlertDialog.Builder(requireContext()).setTitle("Delete Transaction")
                     .setMessage("This cannot be undone.")
-                    .setPositiveButton("Delete") { _, _ -> vm.delete(tx); findNavController().navigateUp() }
+                    .setPositiveButton("Delete") { _, _ -> 
+                        lifecycleScope.launch {
+                            // Wait for the repository to finish deletion and wallet adjustment
+                            vm.delete(tx).join()
+                            findNavController().popBackStack() 
+                        }
+                    }
                     .setNegativeButton("Cancel", null).show()
             }
         }

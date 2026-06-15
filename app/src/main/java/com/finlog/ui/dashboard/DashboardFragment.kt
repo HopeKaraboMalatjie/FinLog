@@ -19,6 +19,7 @@ import com.finlog.data.model.Transaction
 import com.finlog.data.repository.Repository
 import com.finlog.databinding.FragmentDashboardBinding
 import com.finlog.databinding.ItemBudgetProgressBinding
+import com.finlog.ui.MainActivity
 import com.finlog.ui.transactions.TransactionAdapter
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -29,21 +30,32 @@ class DashboardViewModel(private val repo: Repository) : ViewModel() {
     val transactions = repo.getTransactions().asLiveData()
     val totalBalance = repo.getTotalBalance().asLiveData()
     val recentFive: LiveData<List<Transaction>> = transactions.map { it.take(5) }
-    val monthlyIncome   = MutableLiveData(0.0)
-    val monthlyExpenses = MutableLiveData(0.0)
-
-    val currentMonthBudgets: LiveData<List<Budget>> = liveData {
-        val cal = Calendar.getInstance()
-        repo.getBudgets(cal.get(Calendar.MONTH) + 1, cal.get(Calendar.YEAR))
-            .collect { emit(it) }
-    }
-
-    init { loadSummary() }
-    private fun loadSummary() = viewModelScope.launch {
+    
+    // STRICTLY REACTIVE: Derived from transactions list to update instantly on any change
+    val monthlyIncome: LiveData<Double> = transactions.map { list ->
         val cal = Calendar.getInstance()
         val m = cal[Calendar.MONTH] + 1; val y = cal[Calendar.YEAR]
-        monthlyIncome.value   = repo.monthlyTotal(Transaction.TYPE_INCOME,  m, y)
-        monthlyExpenses.value = repo.monthlyTotal(Transaction.TYPE_EXPENSE, m, y)
+        list.filter { it.type == Transaction.TYPE_INCOME && isSameMonth(it.date, m, y) }.sumOf { it.amount }
+    }
+    
+    val monthlyExpenses: LiveData<Double> = transactions.map { list ->
+        val cal = Calendar.getInstance()
+        val m = cal[Calendar.MONTH] + 1; val y = cal[Calendar.YEAR]
+        list.filter { it.type == Transaction.TYPE_EXPENSE && isSameMonth(it.date, m, y) }.sumOf { it.amount }
+    }
+
+    val currentMonthBudgets: LiveData<List<Budget>> = transactions.switchMap {
+        liveData {
+            val cal = Calendar.getInstance()
+            val m = cal.get(Calendar.MONTH) + 1; val y = cal.get(Calendar.YEAR)
+            repo.refreshAllBudgetsForMonth(m, y)
+            repo.getBudgets(m, y).collect { emit(it) }
+        }
+    }
+
+    private fun isSameMonth(dateMs: Long, m: Int, y: Int): Boolean {
+        val cal = Calendar.getInstance().apply { timeInMillis = dateMs }
+        return (cal[Calendar.MONTH] + 1) == m && cal[Calendar.YEAR] == y
     }
 }
 
@@ -96,16 +108,24 @@ class DashboardFragment : Fragment() {
         vm.totalBalance.observe(viewLifecycleOwner)    { b.tvBalance.text  = fmt.format(it ?: 0.0) }
         vm.monthlyIncome.observe(viewLifecycleOwner)   { b.tvIncome.text   = fmt.format(it) }
         vm.monthlyExpenses.observe(viewLifecycleOwner) { b.tvExpenses.text = fmt.format(it) }
+        
+        // DYNAMIC OBSERVER: Always reactive to DB changes
         vm.recentFive.observe(viewLifecycleOwner) { list ->
             adapter.submitList(list)
             b.tvEmpty.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
         }
+        
+        // DYNAMIC OBSERVER: Reactive budget tracking
         vm.currentMonthBudgets.observe(viewLifecycleOwner) { list ->
             budgetAdapter.submitList(list)
         }
 
         b.btnInsights.setOnClickListener {
             findNavController().navigate(R.id.action_dashboard_to_insights)
+        }
+
+        b.btnMenu.setOnClickListener {
+            (requireActivity() as MainActivity).openDrawer()
         }
 
         b.btnSettings.setOnClickListener {

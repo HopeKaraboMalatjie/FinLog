@@ -30,15 +30,22 @@ class BudgetViewModel(private val repo: Repository) : ViewModel() {
     private val _month = MutableLiveData(Calendar.getInstance().get(Calendar.MONTH) + 1)
     private val _year  = MutableLiveData(Calendar.getInstance().get(Calendar.YEAR))
     val month: LiveData<Int> = _month; val year: LiveData<Int> = _year
-    val healthScore = MutableLiveData(100)
     val budgets: LiveData<List<Budget>> = _month.switchMap { m -> _year.switchMap { y -> repo.getBudgets(m, y).asLiveData() } }
-    fun navigate(d: Int) {
-        val cal = Calendar.getInstance().apply { set(Calendar.MONTH, (_month.value ?: 1) - 1); set(Calendar.YEAR, _year.value ?: 2026); add(Calendar.MONTH, d) }
-        _month.value = cal.get(Calendar.MONTH) + 1; _year.value = cal.get(Calendar.YEAR)
-    }
-    fun calcScore(list: List<Budget>) {
-        healthScore.value = if (list.isEmpty()) 100
+    
+    // Reactive: Health score is automatically derived from the budget list
+    val healthScore: LiveData<Int> = budgets.map { list ->
+        if (list.isEmpty()) 100
         else (100 - list.count { it.isOverBudget } * 20 - list.count { it.isNearLimit && !it.isOverBudget } * 8).coerceIn(0, 100)
+    }
+
+    fun navigate(d: Int) {
+        val cal = Calendar.getInstance().apply { 
+            set(Calendar.MONTH, (_month.value ?: 1) - 1)
+            set(Calendar.YEAR, _year.value ?: 2026)
+            add(Calendar.MONTH, d) 
+        }
+        _month.value = cal.get(Calendar.MONTH) + 1
+        _year.value = cal.get(Calendar.YEAR)
     }
     fun save(b: Budget)   = viewModelScope.launch { repo.saveBudget(b) }
     fun delete(b: Budget) = viewModelScope.launch { repo.deleteBudget(b) }
@@ -69,7 +76,7 @@ class BudgetFragment : Fragment() {
         vm.month.observe(viewLifecycleOwner)  { m -> b.tvMonth.text = "${MON[m - 1]} ${vm.year.value}" }
         vm.budgets.observe(viewLifecycleOwner) { list ->
             adapter.submitList(list); b.tvEmpty.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
-            vm.calcScore(list); list.filter { it.isNearLimit || it.isOverBudget }.forEach { sendAlert(it) }
+            list.filter { it.isNearLimit || it.isOverBudget }.forEach { sendAlert(it) }
 
             // Gamification
             val allGood = list.isNotEmpty() && list.all { !it.isOverBudget }
